@@ -1,0 +1,84 @@
+subprojects {
+    buildscript {
+        repositories {
+            mavenCentral()
+            maven {
+                url "https://plugins.gradle.org/m2/"
+            }
+        }
+        dependencies {
+            classpath "org.jfrog.buildinfo:build-info-extractor-gradle:4.7.3"
+            classpath "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:2.6.2"
+        }
+    }
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        jcenter()
+        maven {
+            url project.ext.get('local.repo.release')
+        }
+        maven {
+            name 'local'
+            url project.ext.get('local.repo.snapshot')
+        }
+    }
+
+    apply plugin: 'java'
+    apply plugin: 'jacoco'
+    apply plugin: 'maven'
+    apply plugin: 'maven-publish'
+    apply plugin: 'idea'
+    apply plugin: 'sonarqube'
+    sourceCompatibility = 1.8
+
+//    test.ignoreFailures = true
+   
+    plugins {
+  id "org.sonarqube" version "3.3"
+}
+    jacoco {
+        toolVersion = "0.7.6.201602180812"
+    }
+
+    jacocoTestReport {
+        reports {
+            xml.enabled true
+            csv.enabled true
+            html.destination "${buildDir}/jacocoHtml"
+        }
+    }
+
+    task copyLibs(type: Copy) {
+        from configurations.compile
+        into "build/dependencies"
+    }
+
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                if (plugins.hasPlugin('java') && !(plugins.hasPlugin('war') || plugins.hasPlugin('ear'))) {
+                    from components.java
+                } else {
+                    from components.web
+                }
+            }
+        }
+    }
+
+    dependencies {
+        testCompile 'junit:junit:4.12'
+        testCompile 'org.slf4j:slf4j-simple:1.7.21'
+
+    }
+    task createFolders(description: 'Creates the source folders if they do not exist.') doLast {
+        sourceSets*.allSource*.srcDirs*.each { File srcDir ->
+            if (!srcDir.isDirectory()) {
+                println "Creating source folder: ${srcDir}"
+                srcDir.mkdirs()
+            }
+        }
+    }
+    compileJava.dependsOn copyLibs
+}
+

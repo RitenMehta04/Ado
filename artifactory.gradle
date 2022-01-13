@@ -1,0 +1,23 @@
+artifactory {
+    def user = project.ext.get('local.repo.user')
+    def pwd = project.ext.get('local.repo.password')
+    def uploadDir = project.ext.get('local.repo.dir.upload')
+    contextUrl = project.ext.get('local.repo.base')
+    publish {
+        repository {
+            repoKey = uploadDir
+            username = user
+            password = pwd
+        }
+        defaults {
+            publications('mavenJava')
+        }
+    }
+    resolve {
+        repository {
+            repoKey = uploadDir
+            username = user
+            password = pwd
+        }
+    }
+}
